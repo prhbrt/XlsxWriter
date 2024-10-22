@@ -2291,18 +2291,22 @@ class Worksheet(xmlwriter.XMLwriter):
 
     @convert_range_args
     def merge_range(
-        self, first_row, first_col, last_row, last_col, data, cell_format=None
+        self, first_row, first_col, last_row, last_col, data, cell_format=None,
+        allow_single_cell=False
     ):
         """
         Merge a range of cells.
 
         Args:
-            first_row:    The first row of the cell range. (zero indexed).
-            first_col:    The first column of the cell range.
-            last_row:     The last row of the cell range. (zero indexed).
-            last_col:     The last column of the cell range.
-            data:         Cell data.
-            cell_format:  Cell Format object.
+            first_row:         The first row of the cell range. (zero indexed).
+            first_col:         The first column of the cell range.
+            last_row:          The last row of the cell range. (zero indexed).
+            last_col:          The last column of the cell range.
+            data:              Cell data.
+            cell_format:       Cell Format object.
+            allow_single_cell: Excel doesn't allow merging a single cell, and trying to
+                               will give a warning and write no content. If true, `write`
+                               will be used instead, and no cells will be merged.
 
         Returns:
              0:    Success.
@@ -2315,8 +2319,11 @@ class Worksheet(xmlwriter.XMLwriter):
 
         # Excel doesn't allow a single cell to be merged
         if first_row == last_row and first_col == last_col:
-            warn("Can't merge single cell")
-            return
+            if allow_single_cell:
+                return self.write(first_row, first_col, data, cell_format)
+            else:
+                warn("Can't merge single cell")
+                return
 
         # Swap last row/col with first row/col as necessary
         if first_row > last_row:
